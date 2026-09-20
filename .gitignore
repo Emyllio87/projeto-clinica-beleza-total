@@ -1,0 +1,36 @@
+# Backend
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+
+# Frontend node_modules (if using)
+frontend/node_modules/
+
+# Temporary files
+/tmp/
+*.tmp
+
+# Documentos de análise (não commitar)
+*.docx
+*.pdf
+
+# Backend git (evitar repositório aninhado)
+backend/.git

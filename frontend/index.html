@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clínica Beleza Total</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <h1>Clínica Beleza Total</h1>
+        <nav>
+            <a href="#servicos">Serviços</a>
+            <a href="#sobre">Sobre</a>
+            <a href="#contato">Contato</a>
+            <a href="login.html" class="btn btn-primary">Área Restrita</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>Beleza e Bem-Estar</h1>
+        <p>Procedimentos faciais, corporais e capilares com profissionais qualificados</p>
+        <a href="#servicos" class="btn btn-primary">Conheça nossos serviços</a>
+    </section>
+
+    <section id="servicos">
+        <h2 style="text-align: center; padding: 2rem;">Nossos Serviços</h2>
+        <div class="services-grid" id="servicesGrid">
+            <!-- Procedimentos serão carregados via API -->
+        </div>
+    </section>
+
+    <section id="sobre" class="card" style="max-width: 800px; margin: 2rem auto;">
+        <h2>Sobre a Clínica</h2>
+        <p>A <strong>Clínica Beleza Total</strong> é uma organização que presta serviços estéticos ao público feminino, incluindo procedimentos faciais, capilares, corporais e invasivos.</p>
+        <p style="margin-top: 1rem;">Nossa equipe de profissionais qualificados está comprometida em proporcionar a melhor experiência e resultados para nossas clientes.</p>
+    </section>
+
+    <section id="contato" class="card" style="max-width: 800px; margin: 2rem auto;">
+        <h2>Contato</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
+            <div>
+                <h3>Informações</h3>
+                <p><strong>Responsável:</strong> Silvana da Costa</p>
+                <p><strong>Telefone:</strong> (62) 99999-9999</p>
+                <p><strong>Email:</strong> contato@belezatotal.com.br</p>
+            </div>
+            <div>
+                <h3>Horário de Funcionamento</h3>
+                <p>Segunda a Sexta: 8h às 18h</p>
+                <p>Sábado: 8h às 14h</p>
+            </div>
+        </div>
+    </section>
+
+    <footer style="background: #333; color: white; text-align: center; padding: 1rem; margin-top: 2rem;">
+        <p>&copy; 2026 Clínica Beleza Total - Todos os direitos reservados</p>
+    </footer>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const procedimentos = await api.publicGet('/public/portfolio');
+                const grid = document.getElementById('servicesGrid');
+                
+                procedimentos.forEach(proc => {
+                    const card = document.createElement('div');
+                    card.className = 'service-card';
+                    card.innerHTML = `
+                        <h3>${proc.nome}</h3>
+                        <p>${proc.descricao}</p>
+                        <p><strong>Duração:</strong> ${proc.duracaoMinutos} minutos</p>
+                        <p><strong>Valor:</strong> ${format.currency(proc.valor)}</p>
+                        <span class="badge badge-info">${proc.categoria}</span>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar procedimentos:', error);
+            }
+        });
+    </script>
+</body>
+</html>
