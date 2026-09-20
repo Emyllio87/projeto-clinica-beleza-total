@@ -14,7 +14,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/procedimentos")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ProcedimentoController {
 
     private final ProcedimentoService procedimentoService;

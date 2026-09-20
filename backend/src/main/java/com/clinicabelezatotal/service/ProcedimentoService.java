@@ -22,6 +22,7 @@ public class ProcedimentoService {
             .duracaoMinutos(dto.getDuracaoMinutos())
             .valor(dto.getValor())
             .categoria(dto.getCategoria())
+            .imagemUrl(dto.getImagemUrl())
             .ativo(true)
             .build();
         
@@ -57,6 +58,7 @@ public class ProcedimentoService {
         procedimento.setDuracaoMinutos(dto.getDuracaoMinutos());
         procedimento.setValor(dto.getValor());
         procedimento.setCategoria(dto.getCategoria());
+        procedimento.setImagemUrl(dto.getImagemUrl());
         
         procedimento = procedimentoRepository.save(procedimento);
         return toDTO(procedimento);
@@ -77,6 +79,7 @@ public class ProcedimentoService {
         dto.setDuracaoMinutos(procedimento.getDuracaoMinutos());
         dto.setValor(procedimento.getValor());
         dto.setCategoria(procedimento.getCategoria());
+        dto.setImagemUrl(procedimento.getImagemUrl());
         return dto;
     }
 }

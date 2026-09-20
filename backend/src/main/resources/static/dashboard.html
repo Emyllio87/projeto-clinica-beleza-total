@@ -21,6 +21,9 @@
                 <li id="menuAgendamentos"><a href="#" onclick="showSection('agendamentos')">Agendamentos</a></li>
                 <li id="menuUsuarios"><a href="#" onclick="showSection('usuarios')">Usuários</a></li>
                 <li id="menuHorarios"><a href="#" onclick="showSection('horarios')">Horários</a></li>
+                <li id="menuHistorico"><a href="#" onclick="showSection('historico')">Histórico</a></li>
+                <li id="menuIndicadores"><a href="#" onclick="showSection('indicadores')">Indicadores</a></li>
+                <li id="menuMinhaAgenda"><a href="#" onclick="showSection('minhaAgenda')">Minha Agenda</a></li>
                 <li><a href="#" onclick="auth.logout()">Sair</a></li>
             </ul>
         </aside>
@@ -197,6 +200,153 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Histórico -->
+            <div id="sectionHistorico" class="section" style="display:none;">
+                <h2>Histórico de Agendamentos</h2>
+                <div class="card" style="margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 1rem; align-items: flex-end;">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label>Cliente *</label>
+                            <select id="historicoCliente" required></select>
+                        </div>
+                        <button class="btn btn-primary" onclick="buscarHistorico()" style="height: fit-content;">Buscar</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Cliente</th>
+                                    <th>Funcionário</th>
+                                    <th>Procedimento</th>
+                                    <th>Data</th>
+                                    <th>Horário</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historicoTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Indicadores -->
+            <div id="sectionIndicadores" class="section" style="display:none;">
+                <h2>Indicadores e Relatórios</h2>
+                <div class="card" style="margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 1rem; align-items: flex-end;">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label>Data Início *</label>
+                            <input type="date" id="indicadorInicio" required>
+                        </div>
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label>Data Fim *</label>
+                            <input type="date" id="indicadorFim" required>
+                        </div>
+                        <button class="btn btn-primary" onclick="carregarIndicadores()" style="height: fit-content;">Gerar Relatório</button>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid" style="margin-bottom: 1rem;">
+                    <div class="stat-card">
+                        <h3 id="indHoje">0</h3>
+                        <p>Agendamentos Hoje</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="indPeriodo">0</h3>
+                        <p>No Período</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="indRealizados">0</h3>
+                        <p>Realizados</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="indCancelados">0</h3>
+                        <p>Cancelados</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="indPendentes">0</h3>
+                        <p>Pendentes</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="indNaoCompareceram">0</h3>
+                        <p>Não Compareceram</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="indTotalClientes">0</h3>
+                        <p>Total Clientes</p>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="card">
+                        <h3>Atendimentos por Profissional</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Profissional</th>
+                                        <th>Total</th>
+                                        <th>Realizados</th>
+                                        <th>Cancelados</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="indicadorProfissionaisTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>Procedimentos Mais Agendados</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Procedimento</th>
+                                        <th>Categoria</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="indicadorProcedimentosTable"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Minha Agenda -->
+            <div id="sectionMinhaAgenda" class="section" style="display:none;">
+                <h2>Minha Agenda</h2>
+                <div class="card" style="margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 1rem; align-items: flex-end;">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label>Filtrar por data</label>
+                            <input type="date" id="minhaAgendaData" onchange="filtrarMinhaAgenda()">
+                        </div>
+                        <button class="btn btn-primary" onclick="carregarMinhaAgenda()" style="height: fit-content;">Mostrar Todos</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Cliente</th>
+                                    <th>Procedimento</th>
+                                    <th>Data</th>
+                                    <th>Horário</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="minhaAgendaTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -296,8 +446,8 @@
                     <input type="number" id="procedimentoDuracao" required>
                 </div>
                 <div class="form-group">
-                    <label>Valor (R$) *</label>
-                    <input type="number" id="procedimentoValor" step="0.01" required>
+                    <label>Valor (R$)</label>
+                    <input type="number" id="procedimentoValor" step="0.01">
                 </div>
                 <div class="form-group">
                     <label>Categoria *</label>

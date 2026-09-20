@@ -1,7 +1,9 @@
 package com.clinicabelezatotal.controller;
 
+import com.clinicabelezatotal.dto.FuncionarioDTO;
 import com.clinicabelezatotal.dto.ProcedimentoDTO;
 import com.clinicabelezatotal.model.Procedimento.CategoriaProcedimento;
+import com.clinicabelezatotal.service.FuncionarioService;
 import com.clinicabelezatotal.service.ProcedimentoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,10 +15,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/public")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class PublicController {
 
     private final ProcedimentoService procedimentoService;
+    private final FuncionarioService funcionarioService;
 
     // RF24 - Homepage institucional e portfólio de serviços (acesso público)
     @GetMapping("/homepage")
@@ -49,5 +51,11 @@ public class PublicController {
     @GetMapping("/portfolio/categoria/{categoria}")
     public ResponseEntity<List<ProcedimentoDTO>> portfolioPorCategoria(@PathVariable CategoriaProcedimento categoria) {
         return ResponseEntity.ok(procedimentoService.listarPorCategoria(categoria));
+    }
+
+    // RF24 - Profissionais (acesso público)
+    @GetMapping("/funcionarios")
+    public ResponseEntity<List<FuncionarioDTO>> funcionarios() {
+        return ResponseEntity.ok(funcionarioService.listarTodos());
     }
 }

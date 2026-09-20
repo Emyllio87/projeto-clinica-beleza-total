@@ -1,6 +1,7 @@
 package com.clinicabelezatotal.controller;
 
 import com.clinicabelezatotal.dto.AgendamentoDTO;
+import com.clinicabelezatotal.dto.HistoricoAgendamentoDTO;
 import com.clinicabelezatotal.model.Agendamento.StatusAgendamento;
 import com.clinicabelezatotal.service.AgendamentoService;
 import jakarta.validation.Valid;
@@ -8,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -16,7 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/agendamentos")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class AgendamentoController {
 
     private final AgendamentoService agendamentoService;
@@ -25,6 +27,20 @@ public class AgendamentoController {
     @PreAuthorize("hasAnyRole('ADMIN', 'RECEPCIONISTA', 'ESTETICISTA_ADMINISTRADORA')")
     public ResponseEntity<AgendamentoDTO> agendar(@Valid @RequestBody AgendamentoDTO dto) {
         return ResponseEntity.ok(agendamentoService.agendar(dto));
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('FUNCIONARIO', 'ADMIN', 'RECEPCIONISTA', 'ESTETICISTA_ADMINISTRADORA')")
+    public ResponseEntity<List<AgendamentoDTO>> listarMeusAgendamentos() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        return ResponseEntity.ok(agendamentoService.listarPorEmailFuncionario(email));
+    }
+
+    @GetMapping("/funcionario/{funcionarioId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPCIONISTA', 'ESTETICISTA_ADMINISTRADORA', 'FUNCIONARIO')")
+    public ResponseEntity<List<AgendamentoDTO>> listarPorFuncionario(@PathVariable Long funcionarioId) {
+        return ResponseEntity.ok(agendamentoService.listarTodosPorFuncionario(funcionarioId));
     }
 
     @GetMapping("/funcionario/{funcionarioId}/data/{data}")
@@ -47,6 +63,12 @@ public class AgendamentoController {
     @PreAuthorize("hasAnyRole('ADMIN', 'RECEPCIONISTA', 'ESTETICISTA_ADMINISTRADORA')")
     public ResponseEntity<List<AgendamentoDTO>> listarPorCliente(@PathVariable Long clienteId) {
         return ResponseEntity.ok(agendamentoService.listarPorCliente(clienteId));
+    }
+
+    @GetMapping("/cliente/{clienteId}/historico")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPCIONISTA', 'ESTETICISTA_ADMINISTRADORA')")
+    public ResponseEntity<List<HistoricoAgendamentoDTO>> buscarHistorico(@PathVariable Long clienteId) {
+        return ResponseEntity.ok(agendamentoService.buscarHistoricoPorCliente(clienteId));
     }
 
     @PatchMapping("/{id}/status")

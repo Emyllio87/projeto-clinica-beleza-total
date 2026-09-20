@@ -10,7 +10,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Entity
-@Table(name = "horarios_atendimento")
+@Table(name = "horarios_atendimento", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"funcionario_id", "dia_semana", "hora_inicio"})
+})
 @Getter
 @Setter
 @NoArgsConstructor

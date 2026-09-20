@@ -15,7 +15,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/horarios")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class HorarioAtendimentoController {
 
     private final HorarioAtendimentoService horarioService;

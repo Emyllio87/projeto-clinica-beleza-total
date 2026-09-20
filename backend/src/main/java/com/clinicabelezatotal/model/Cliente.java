@@ -67,6 +67,7 @@ public class Cliente {
         this.cpf = null;
         this.email = null;
         this.observacoes = null;
+        this.dataNascimento = null;
         this.consentimentoWhatsApp = false;
         this.consentimentoDados = false;
         this.ativo = false;

@@ -1,5 +1,12 @@
 const API_URL = '/api';
 
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(String(str)));
+    return div.innerHTML;
+}
+
 const api = {
     getToken: () => localStorage.getItem('token'),
     

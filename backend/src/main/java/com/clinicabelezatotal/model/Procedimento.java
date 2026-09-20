@@ -30,7 +30,7 @@ public class Procedimento {
     @Column(nullable = false)
     private Integer duracaoMinutos;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     private BigDecimal valor;
 
     @Enumerated(EnumType.STRING)
@@ -39,6 +39,8 @@ public class Procedimento {
 
     @Column(nullable = false)
     private Boolean ativo = true;
+
+    private String imagemUrl;
 
     @CreationTimestamp
     @Column(updatable = false)

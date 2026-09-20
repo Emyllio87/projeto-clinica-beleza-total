@@ -3,6 +3,7 @@ package com.clinicabelezatotal.dto;
 import com.clinicabelezatotal.model.Procedimento.CategoriaProcedimento;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -19,11 +20,13 @@ public class ProcedimentoDTO {
     private String descricao;
     
     @NotNull(message = "Duração é obrigatória")
+    @Positive(message = "Duração deve ser maior que zero")
     private Integer duracaoMinutos;
     
-    @NotNull(message = "Valor é obrigatório")
     private BigDecimal valor;
     
     @NotNull(message = "Categoria é obrigatória")
     private CategoriaProcedimento categoria;
+
+    private String imagemUrl;
 }

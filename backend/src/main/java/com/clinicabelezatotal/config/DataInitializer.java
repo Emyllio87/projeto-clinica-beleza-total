@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.UUID;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -44,42 +46,34 @@ public class DataInitializer implements CommandLineRunner {
             List<Procedimento> procedimentos = List.of(
                 Procedimento.builder()
                     .nome("Limpeza de Pele")
-                    .descricao("Limpeza profunda da pele com extração de impurezas")
+                    .descricao("Limpeza profunda da pele com extração de impurezas, hidratação e proteção")
                     .duracaoMinutos(60)
-                    .valor(new BigDecimal("120.00"))
                     .categoria(Procedimento.CategoriaProcedimento.FACIAL)
+                    .imagemUrl("https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&h=300&fit=crop")
                     .ativo(true)
                     .build(),
                 Procedimento.builder()
-                    .nome("Drenagem Linfática")
-                    .descricao("Massagem para drenagem de líquidos e toxinas")
-                    .duracaoMinutos(60)
-                    .valor(new BigDecimal("150.00"))
-                    .categoria(Procedimento.CategoriaProcedimento.CORPORAL)
-                    .ativo(true)
-                    .build(),
-                Procedimento.builder()
-                    .nome("Tratamento Capilar")
-                    .descricao("Tratamento hidratante e nutritivo para cabelos")
+                    .nome("Maquiagem Profissional")
+                    .descricao("Maquiagem completa para eventos, formaturas, casamentos e ocasiões especiais")
                     .duracaoMinutos(90)
-                    .valor(new BigDecimal("200.00"))
-                    .categoria(Procedimento.CategoriaProcedimento.CAPILAR)
-                    .ativo(true)
-                    .build(),
-                Procedimento.builder()
-                    .nome("Peeling Químico")
-                    .descricao("Renovação celular com ácidos naturais")
-                    .duracaoMinutos(45)
-                    .valor(new BigDecimal("180.00"))
                     .categoria(Procedimento.CategoriaProcedimento.FACIAL)
+                    .imagemUrl("https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400&h=300&fit=crop")
                     .ativo(true)
                     .build(),
                 Procedimento.builder()
-                    .nome("Massagem Modeladora")
-                    .descricao("Massagem para modelagem corporal e redução de medidas")
-                    .duracaoMinutos(60)
-                    .valor(new BigDecimal("130.00"))
+                    .nome("Penteados")
+                    .descricao("Penteados para noivas, formaturas e eventos. Escova, progressiva, tratamentos capilares")
+                    .duracaoMinutos(120)
+                    .categoria(Procedimento.CategoriaProcedimento.CAPILAR)
+                    .imagemUrl("https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=300&fit=crop")
+                    .ativo(true)
+                    .build(),
+                Procedimento.builder()
+                    .nome("Unhas em Gel")
+                    .descricao("Alongamento e manutenção de unhas em gel com acabamento perfeito e duradouro")
+                    .duracaoMinutos(90)
                     .categoria(Procedimento.CategoriaProcedimento.CORPORAL)
+                    .imagemUrl("https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=300&fit=crop")
                     .ativo(true)
                     .build()
             );
@@ -143,32 +137,38 @@ public class DataInitializer implements CommandLineRunner {
         if (usuarioRepository.count() == 0) {
             List<Funcionario> funcionarios = funcionarioRepository.findAll();
 
+            String adminSenha = UUID.randomUUID().toString().substring(0, 12);
+            String silvanaSenha = UUID.randomUUID().toString().substring(0, 12);
+            String fernandaSenha = UUID.randomUUID().toString().substring(0, 12);
+            String anaSenha = UUID.randomUUID().toString().substring(0, 12);
+            String beatrizSenha = UUID.randomUUID().toString().substring(0, 12);
+
             List<Usuario> usuarios = List.of(
                 Usuario.builder()
                     .nome("Administrador")
                     .email("admin@belezatotal.com.br")
-                    .senha(passwordEncoder.encode("admin123"))
+                    .senha(passwordEncoder.encode(adminSenha))
                     .perfil(PerfilUsuario.ADMIN)
                     .ativo(true)
                     .build(),
                 Usuario.builder()
                     .nome("Silvana da Costa")
                     .email("silvana@belezatotal.com.br")
-                    .senha(passwordEncoder.encode("silvana123"))
+                    .senha(passwordEncoder.encode(silvanaSenha))
                     .perfil(PerfilUsuario.ESTETICISTA_ADMINISTRADORA)
                     .ativo(true)
                     .build(),
                 Usuario.builder()
                     .nome("Fernanda Lima")
                     .email("fernanda@belezatotal.com.br")
-                    .senha(passwordEncoder.encode("fernanda123"))
+                    .senha(passwordEncoder.encode(fernandaSenha))
                     .perfil(PerfilUsuario.RECEPCIONISTA)
                     .ativo(true)
                     .build(),
                 Usuario.builder()
                     .nome("Ana Carolina Silva")
                     .email("ana@belezatotal.com.br")
-                    .senha(passwordEncoder.encode("ana123"))
+                    .senha(passwordEncoder.encode(anaSenha))
                     .perfil(PerfilUsuario.FUNCIONARIO)
                     .funcionario(funcionarios.get(0))
                     .ativo(true)
@@ -176,14 +176,20 @@ public class DataInitializer implements CommandLineRunner {
                 Usuario.builder()
                     .nome("Beatriz Santos")
                     .email("beatriz@belezatotal.com.br")
-                    .senha(passwordEncoder.encode("beatriz123"))
+                    .senha(passwordEncoder.encode(beatrizSenha))
                     .perfil(PerfilUsuario.FUNCIONARIO)
                     .funcionario(funcionarios.get(1))
                     .ativo(true)
                     .build()
             );
             usuarioRepository.saveAll(usuarios);
-            log.info("5 usuários criados com sucesso");
+            log.info("=== USUÁRIOS CRIADOS (SENHAS AUTOMÁTICAS) ===");
+            log.info("Admin: admin@belezatotal.com.br / {}", adminSenha);
+            log.info("Silvana: silvana@belezatotal.com.br / {}", silvanaSenha);
+            log.info("Fernanda: fernanda@belezatotal.com.br / {}", fernandaSenha);
+            log.info("Ana: ana@belezatotal.com.br / {}", anaSenha);
+            log.info("Beatriz: beatriz@belezatotal.com.br / {}", beatrizSenha);
+            log.info("==============================================");
         }
     }
 

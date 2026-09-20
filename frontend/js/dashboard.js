@@ -6,6 +6,13 @@ let agendamentos = [];
 let usuarios = [];
 let horarios = [];
 
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+}
+
 // Check authentication
 if (!auth.isAuthenticated()) {
     window.location.href = 'login.html';
@@ -23,7 +30,6 @@ function loadUserInfo() {
     if (user) {
         document.getElementById('userProfile').textContent = `${user.nome} - ${user.perfil}`;
         
-        // Hide menu items based on role
         if (!auth.hasRole(['ADMIN', 'ESTETICISTA_ADMINISTRADORA'])) {
             document.getElementById('menuUsuarios').style.display = 'none';
         }
@@ -39,9 +45,9 @@ function showSection(section) {
     document.getElementById(`section${section.charAt(0).toUpperCase() + section.slice(1)}`).style.display = 'block';
     
     document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
-    event.target.classList.add('active');
+    const activeLink = document.querySelector(`.sidebar-menu a[onclick*="${section}"]`);
+    if (activeLink) activeLink.classList.add('active');
     
-    // Load data for section
     switch(section) {
         case 'dashboard': loadDashboard(); break;
         case 'clientes': loadClientes(); break;
@@ -50,6 +56,9 @@ function showSection(section) {
         case 'agendamentos': loadAgendamentos(); break;
         case 'usuarios': loadUsuarios(); break;
         case 'horarios': loadHorarios(); break;
+        case 'historico': loadHistoricoSelect(); break;
+        case 'indicadores': loadIndicadoresInit(); break;
+        case 'minhaAgenda': carregarMinhaAgenda(); break;
     }
 }
 
@@ -85,9 +94,9 @@ async function loadClientes() {
         tbody.innerHTML = clientes.map(c => `
             <tr>
                 <td>${c.id}</td>
-                <td>${c.nome}</td>
-                <td>${c.telefone}</td>
-                <td>${c.email || '-'}</td>
+                <td>${escapeHtml(c.nome)}</td>
+                <td>${escapeHtml(c.telefone)}</td>
+                <td>${escapeHtml(c.email) || '-'}</td>
                 <td>
                     <button class="btn btn-warning" onclick="editCliente(${c.id})">Editar</button>
                     <button class="btn btn-danger" onclick="deleteCliente(${c.id})">Excluir</button>
@@ -136,9 +145,9 @@ async function loadFuncionarios() {
         tbody.innerHTML = funcionarios.map(f => `
             <tr>
                 <td>${f.id}</td>
-                <td>${f.nome}</td>
-                <td>${f.telefone}</td>
-                <td>${f.especialidade || '-'}</td>
+                <td>${escapeHtml(f.nome)}</td>
+                <td>${escapeHtml(f.telefone)}</td>
+                <td>${escapeHtml(f.especialidade) || '-'}</td>
                 <td>
                     <button class="btn btn-warning" onclick="editFuncionario(${f.id})">Editar</button>
                     <button class="btn btn-danger" onclick="deleteFuncionario(${f.id})">Excluir</button>
@@ -163,7 +172,7 @@ async function openFuncionarioModal(funcionario = null) {
     }
     const select = document.getElementById('funcionarioProcedimentos');
     select.innerHTML = procedimentos.map(p => 
-        `<option value="${p.id}" ${funcionario?.procedimentoIds?.includes(p.id) ? 'selected' : ''}>${p.nome}</option>`
+        `<option value="${p.id}" ${funcionario?.procedimentoIds?.includes(p.id) ? 'selected' : ''}>${escapeHtml(p.nome)}</option>`
     ).join('');
     
     ui.showModal('funcionarioModal');
@@ -194,10 +203,10 @@ async function loadProcedimentos() {
         tbody.innerHTML = procedimentos.map(p => `
             <tr>
                 <td>${p.id}</td>
-                <td>${p.nome}</td>
+                <td>${escapeHtml(p.nome)}</td>
                 <td><span class="badge badge-info">${p.categoria}</span></td>
                 <td>${p.duracaoMinutos} min</td>
-                <td>${format.currency(p.valor)}</td>
+                <td>${p.valor ? format.currency(p.valor) : '-'}</td>
                 <td>
                     <button class="btn btn-warning" onclick="editProcedimento(${p.id})">Editar</button>
                     <button class="btn btn-danger" onclick="deleteProcedimento(${p.id})">Excluir</button>
@@ -255,9 +264,9 @@ async function loadAgendamentos() {
             return `
                 <tr>
                     <td>${a.id}</td>
-                    <td>${cliente?.nome || '-'}</td>
-                    <td>${funcionario?.nome || '-'}</td>
-                    <td>${procedimento?.nome || '-'}</td>
+                    <td>${escapeHtml(cliente?.nome) || '-'}</td>
+                    <td>${escapeHtml(funcionario?.nome) || '-'}</td>
+                    <td>${escapeHtml(procedimento?.nome) || '-'}</td>
                     <td>${format.date(a.data)}</td>
                     <td>${a.horaInicio}</td>
                     <td>${format.status(a.status || 'AGENDADO')}</td>
@@ -333,8 +342,8 @@ async function loadUsuarios() {
         tbody.innerHTML = usuarios.map(u => `
             <tr>
                 <td>${u.id}</td>
-                <td>${u.nome}</td>
-                <td>${u.email}</td>
+                <td>${escapeHtml(u.nome)}</td>
+                <td>${escapeHtml(u.email)}</td>
                 <td><span class="badge badge-info">${u.perfil}</span></td>
                 <td>
                     <button class="btn btn-warning" onclick="editUsuario(${u.id})">Editar</button>
@@ -377,7 +386,6 @@ async function deleteUsuario(id) {
 // Horários
 async function loadHorarios() {
     try {
-        horarios = await api.get('/horarios/funcionario/1') || [];
         if (funcionarios.length === 0) funcionarios = await api.get('/funcionarios') || [];
         
         const allHorarios = [];
@@ -391,11 +399,12 @@ async function loadHorarios() {
         tbody.innerHTML = horarios.map(h => `
             <tr>
                 <td>${h.id}</td>
-                <td>${h.funcionarioNome || '-'}</td>
+                <td>${escapeHtml(h.funcionarioNome) || '-'}</td>
                 <td>${h.diaSemana}</td>
                 <td>${h.horaInicio}</td>
                 <td>${h.horaFim}</td>
                 <td>
+                    <button class="btn btn-warning" onclick="editHorario(${h.id})">Editar</button>
                     <button class="btn btn-danger" onclick="deleteHorario(${h.id})">Excluir</button>
                 </td>
             </tr>
@@ -405,10 +414,31 @@ async function loadHorarios() {
     }
 }
 
-async function openHorarioModal() {
+async function openHorarioModal(horario = null) {
     if (funcionarios.length === 0) funcionarios = await api.get('/funcionarios') || [];
     ui.populateSelect('horarioFuncionario', funcionarios, 'id', 'nome');
+    
+    if (horario) {
+        document.getElementById('horarioId').value = horario.id;
+        document.getElementById('horarioFuncionario').value = horario.funcionarioId;
+        document.getElementById('horarioDia').value = horario.diaSemana;
+        document.getElementById('horarioInicio').value = horario.horaInicio;
+        document.getElementById('horarioFim').value = horario.horaFim;
+        document.getElementById('horarioModalTitle').textContent = 'Editar Horário';
+    } else {
+        document.getElementById('horarioId').value = '';
+        document.getElementById('horarioDia').value = '';
+        document.getElementById('horarioInicio').value = '';
+        document.getElementById('horarioFim').value = '';
+        document.getElementById('horarioModalTitle').textContent = 'Novo Horário';
+    }
+    
     ui.showModal('horarioModal');
+}
+
+function editHorario(id) {
+    const horario = horarios.find(h => h.id === id);
+    if (horario) openHorarioModal(horario);
 }
 
 async function deleteHorario(id) {
@@ -420,6 +450,181 @@ async function deleteHorario(id) {
         } catch (error) {
             ui.showAlert(error.message, 'error');
         }
+    }
+}
+
+// Histórico
+async function loadHistoricoSelect() {
+    try {
+        if (clientes.length === 0) clientes = await api.get('/clientes') || [];
+        ui.populateSelect('historicoCliente', clientes, 'id', 'nome');
+    } catch (error) {
+        console.error('Erro ao carregar clientes para histórico:', error);
+    }
+}
+
+async function buscarHistorico() {
+    const clienteId = document.getElementById('historicoCliente').value;
+    if (!clienteId) {
+        ui.showAlert('Selecione um cliente', 'error');
+        return;
+    }
+    
+    try {
+        const historico = await api.get(`/agendamentos/cliente/${clienteId}/historico`);
+        const tbody = document.getElementById('historicoTable');
+        
+        if (!historico || historico.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Nenhum agendamento encontrado</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = historico.map(h => `
+            <tr>
+                <td>${h.id}</td>
+                <td>${escapeHtml(h.nomeCliente)}</td>
+                <td>${escapeHtml(h.nomeFuncionario)}</td>
+                <td>${escapeHtml(h.nomeProcedimento)}</td>
+                <td>${format.date(h.data)}</td>
+                <td>${h.horaInicio} - ${h.horaFim}</td>
+                <td>${format.status(h.status)}</td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        ui.showAlert(error.message, 'error');
+    }
+}
+
+// Indicadores
+function loadIndicadoresInit() {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    document.getElementById('indicadorInicio').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('indicadorFim').value = today.toISOString().split('T')[0];
+    carregarIndicadores();
+}
+
+async function carregarIndicadores() {
+    const inicio = document.getElementById('indicadorInicio').value;
+    const fim = document.getElementById('indicadorFim').value;
+
+    if (!inicio || !fim) {
+        ui.showAlert('Informe o período', 'error');
+        return;
+    }
+
+    try {
+        const data = await api.get(`/indicadores?inicio=${inicio}&fim=${fim}`);
+
+        document.getElementById('indHoje').textContent = data.totalAgendamentosHoje || 0;
+        document.getElementById('indPeriodo').textContent = data.totalAgendamentosPeriodo || 0;
+        document.getElementById('indRealizados').textContent = data.realizados || 0;
+        document.getElementById('indCancelados').textContent = data.cancelados || 0;
+        document.getElementById('indPendentes').textContent = data.pendentes || 0;
+        document.getElementById('indNaoCompareceram').textContent = data.naoCompareceram || 0;
+        document.getElementById('indTotalClientes').textContent = data.totalClientes || 0;
+
+        const tbodyProf = document.getElementById('indicadorProfissionaisTable');
+        if (data.porProfissional && data.porProfissional.length > 0) {
+            tbodyProf.innerHTML = data.porProfissional.map(p => `
+                <tr>
+                    <td>${escapeHtml(p.nomeProfissional)}</td>
+                    <td>${p.total}</td>
+                    <td>${p.realizados}</td>
+                    <td>${p.cancelados}</td>
+                </tr>
+            `).join('');
+        } else {
+            tbodyProf.innerHTML = '<tr><td colspan="4" style="text-align: center;">Sem dados</td></tr>';
+        }
+
+        const tbodyProc = document.getElementById('indicadorProcedimentosTable');
+        if (data.porProcedimento && data.porProcedimento.length > 0) {
+            tbodyProc.innerHTML = data.porProcedimento.map(p => `
+                <tr>
+                    <td>${escapeHtml(p.nomeProcedimento)}</td>
+                    <td><span class="badge badge-info">${p.categoria}</span></td>
+                    <td>${p.total}</td>
+                </tr>
+            `).join('');
+        } else {
+            tbodyProc.innerHTML = '<tr><td colspan="3" style="text-align: center;">Sem dados</td></tr>';
+        }
+    } catch (error) {
+        ui.showAlert(error.message, 'error');
+    }
+}
+
+// Minha Agenda
+async function carregarMinhaAgenda() {
+    try {
+        const agenda = await api.get('/agendamentos/me');
+
+        if (clientes.length === 0) clientes = await api.get('/clientes') || [];
+        if (funcionarios.length === 0) funcionarios = await api.get('/funcionarios') || [];
+        if (procedimentos.length === 0) procedimentos = await api.get('/procedimentos') || [];
+
+        renderMinhaAgenda(agenda || []);
+    } catch (error) {
+        ui.showAlert(error.message, 'error');
+    }
+}
+
+function filtrarMinhaAgenda() {
+    const dataFiltro = document.getElementById('minhaAgendaData').value;
+    if (!dataFiltro) {
+        carregarMinhaAgenda();
+        return;
+    }
+    const filtrados = (window._minhaAgendaData || []).filter(a => a.data === dataFiltro);
+    renderMinhaAgenda(filtrados);
+}
+
+function renderMinhaAgenda(agendamentos) {
+    window._minhaAgendaData = agendamentos;
+    const tbody = document.getElementById('minhaAgendaTable');
+
+    if (!agendamentos || agendamentos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Nenhum agendamento encontrado</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = agendamentos.map(a => {
+        const cliente = clientes.find(c => c.id === a.clienteId);
+        const procedimento = procedimentos.find(p => p.id === a.procedimentoId);
+
+        return `
+            <tr>
+                <td>${a.id}</td>
+                <td>${escapeHtml(cliente?.nome) || '-'}</td>
+                <td>${escapeHtml(procedimento?.nome) || '-'}</td>
+                <td>${format.date(a.data)}</td>
+                <td>${a.horaInicio}</td>
+                <td>${format.status(a.status || 'AGENDADO')}</td>
+                <td>
+                    <button class="btn btn-warning" onclick="atualizarStatusAgendamento(${a.id})">Atualizar Status</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function atualizarStatusAgendamento(id) {
+    const status = prompt('Novo status: AGENDADO, CONFIRMADO, EM_ATENDIMENTO, REALIZADO, CANCELADO, NAO_COMPARECEU');
+    if (!status) return;
+
+    const statusValidos = ['AGENDADO', 'CONFIRMADO', 'EM_ATENDIMENTO', 'REALIZADO', 'CANCELADO', 'NAO_COMPARECEU'];
+    if (!statusValidos.includes(status)) {
+        ui.showAlert('Status inválido', 'error');
+        return;
+    }
+
+    try {
+        await api.patch(`/agendamentos/${id}/status?status=${status}`);
+        ui.showAlert('Status atualizado com sucesso!');
+        carregarMinhaAgenda();
+    } catch (error) {
+        ui.showAlert(error.message, 'error');
     }
 }
 
@@ -490,8 +695,8 @@ function setupFormHandlers() {
         const data = {
             nome: document.getElementById('procedimentoNome').value,
             descricao: document.getElementById('procedimentoDescricao').value,
-            duracaoMinutos: parseInt(document.getElementById('procedimentoDuracao').value),
-            valor: parseFloat(document.getElementById('procedimentoValor').value),
+                    duracaoMinutos: parseInt(document.getElementById('procedimentoDuracao').value),
+                    valor: parseFloat(document.getElementById('procedimentoValor').value) || null,
             categoria: document.getElementById('procedimentoCategoria').value
         };
         
@@ -573,6 +778,7 @@ function setupFormHandlers() {
     // Horário
     document.getElementById('horarioForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const id = document.getElementById('horarioId')?.value;
         const data = {
             funcionarioId: parseInt(document.getElementById('horarioFuncionario').value),
             diaSemana: document.getElementById('horarioDia').value,
@@ -581,8 +787,13 @@ function setupFormHandlers() {
         };
         
         try {
-            await api.post('/horarios', data);
-            ui.showAlert('Horário cadastrado com sucesso!');
+            if (id) {
+                await api.put(`/horarios/${id}`, data);
+                ui.showAlert('Horário atualizado com sucesso!');
+            } else {
+                await api.post('/horarios', data);
+                ui.showAlert('Horário cadastrado com sucesso!');
+            }
             ui.hideModal('horarioModal');
             loadHorarios();
         } catch (error) {

@@ -18,4 +18,7 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     
     @Query("SELECT c FROM Cliente c WHERE c.ativo = true")
     List<Cliente> findAllAtivos();
+
+    @Query("SELECT COUNT(c) FROM Cliente c WHERE c.ativo = true")
+    long countByAtivoTrue();
 }

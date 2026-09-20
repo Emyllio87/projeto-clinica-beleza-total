@@ -19,8 +19,22 @@ public class HorarioAtendimentoService {
     private final FuncionarioRepository funcionarioRepository;
 
     public HorarioAtendimentoDTO cadastrar(HorarioAtendimentoDTO dto) {
+        if (!dto.getHoraFim().isAfter(dto.getHoraInicio())) {
+            throw new RuntimeException("Hora fim deve ser posterior à hora início");
+        }
+
         Funcionario funcionario = funcionarioRepository.findById(dto.getFuncionarioId())
             .orElseThrow(() -> new ResourceNotFoundException("Funcionário não encontrado"));
+
+        List<HorarioAtendimento> existentes = horarioRepository.findByFuncionarioIdAndDiaSemanaAndAtivoTrue(
+            dto.getFuncionarioId(), dto.getDiaSemana());
+
+        boolean duplicado = existentes.stream().anyMatch(h ->
+            h.getHoraInicio().isBefore(dto.getHoraFim()) && h.getHoraFim().isAfter(dto.getHoraInicio()));
+
+        if (duplicado) {
+            throw new RuntimeException("Já existe horário cadastrado para este funcionário neste período");
+        }
 
         HorarioAtendimento horario = HorarioAtendimento.builder()
             .funcionario(funcionario)
