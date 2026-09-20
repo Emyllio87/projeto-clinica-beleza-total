@@ -91,6 +91,13 @@ public class AgendamentoController {
         return ResponseEntity.ok(agendamentoService.cancelar(id));
     }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RECEPCIONISTA', 'ESTETICISTA_ADMINISTRADORA')")
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        agendamentoService.excluir(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/lembretes")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<AgendamentoDTO>> buscarAgendamentosParaLembrete() {

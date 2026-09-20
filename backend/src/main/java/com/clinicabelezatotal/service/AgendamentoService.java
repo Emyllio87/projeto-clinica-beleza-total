@@ -202,6 +202,12 @@ public class AgendamentoService {
         return toDTO(agendamento);
     }
 
+    public void excluir(Long id) {
+        Agendamento agendamento = agendamentoRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado"));
+        agendamentoRepository.delete(agendamento);
+    }
+
     public List<AgendamentoDTO> buscarAgendamentosParaLembrete() {
         return agendamentoRepository.findParaEnviarLembrete(LocalDate.now()).stream()
             .map(this::toDTO)
@@ -239,7 +245,9 @@ public class AgendamentoService {
         dto.setProcedimentoId(agendamento.getProcedimento().getId());
         dto.setData(agendamento.getData());
         dto.setHoraInicio(agendamento.getHoraInicio());
+        dto.setHoraFim(agendamento.getHoraFim());
         dto.setObservacoes(agendamento.getObservacoes());
+        dto.setStatus(agendamento.getStatus());
         return dto;
     }
 }

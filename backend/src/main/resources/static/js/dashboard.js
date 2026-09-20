@@ -13,6 +13,36 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
+function getHoje() {
+    return new Date().toISOString().split('T')[0];
+}
+
+function getProximoMes() {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 3);
+    return d.toISOString().split('T')[0];
+}
+
+function getMesPassado() {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    return d.toISOString().split('T')[0];
+}
+
+function showLoading(tbodyId, cols) {
+    const tbody = document.getElementById(tbodyId);
+    if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align: center; padding: 2rem;"><div class="spinner" style="margin: 0 auto;"></div><p style="margin-top: 0.5rem; color: var(--text-muted);">Carregando...</p></td></tr>`;
+    }
+}
+
+function showEmpty(tbodyId, cols, msg) {
+    const tbody = document.getElementById(tbodyId);
+    if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="${cols}" style="text-align: center; padding: 2rem; color: var(--text-muted);">${msg || 'Nenhum registro encontrado'}</td></tr>`;
+    }
+}
+
 // Check authentication
 if (!auth.isAuthenticated()) {
     window.location.href = 'login.html';
@@ -69,7 +99,7 @@ async function loadDashboard() {
             api.get('/clientes'),
             api.get('/funcionarios'),
             api.get('/procedimentos'),
-            api.get('/agendamentos/periodo?inicio=2020-01-01&fim=2030-12-31')
+            api.get('/agendamentos/periodo?inicio=' + getMesPassado() + '&fim=' + getProximoMes())
         ]);
         
         clientes = c || [];
@@ -88,9 +118,14 @@ async function loadDashboard() {
 
 // Clientes
 async function loadClientes() {
+    showLoading('clientesTable', 5);
     try {
         clientes = await api.get('/clientes') || [];
         const tbody = document.getElementById('clientesTable');
+        if (clientes.length === 0) {
+            showEmpty('clientesTable', 5);
+            return;
+        }
         tbody.innerHTML = clientes.map(c => `
             <tr>
                 <td>${c.id}</td>
@@ -139,9 +174,14 @@ async function deleteCliente(id) {
 
 // Funcionários
 async function loadFuncionarios() {
+    showLoading('funcionariosTable', 5);
     try {
         funcionarios = await api.get('/funcionarios') || [];
         const tbody = document.getElementById('funcionariosTable');
+        if (funcionarios.length === 0) {
+            showEmpty('funcionariosTable', 5);
+            return;
+        }
         tbody.innerHTML = funcionarios.map(f => `
             <tr>
                 <td>${f.id}</td>
@@ -197,9 +237,14 @@ async function deleteFuncionario(id) {
 
 // Procedimentos
 async function loadProcedimentos() {
+    showLoading('procedimentosTable', 6);
     try {
         procedimentos = await api.get('/procedimentos') || [];
         const tbody = document.getElementById('procedimentosTable');
+        if (procedimentos.length === 0) {
+            showEmpty('procedimentosTable', 6);
+            return;
+        }
         tbody.innerHTML = procedimentos.map(p => `
             <tr>
                 <td>${p.id}</td>
@@ -248,14 +293,19 @@ async function deleteProcedimento(id) {
 
 // Agendamentos
 async function loadAgendamentos() {
+    showLoading('agendamentosTable', 8);
     try {
-        agendamentos = await api.get('/agendamentos/periodo?inicio=2020-01-01&fim=2030-12-31') || [];
+        agendamentos = await api.get('/agendamentos/periodo?inicio=' + getMesPassado() + '&fim=' + getProximoMes()) || [];
         
         if (clientes.length === 0) clientes = await api.get('/clientes') || [];
         if (funcionarios.length === 0) funcionarios = await api.get('/funcionarios') || [];
         if (procedimentos.length === 0) procedimentos = await api.get('/procedimentos') || [];
         
         const tbody = document.getElementById('agendamentosTable');
+        if (agendamentos.length === 0) {
+            showEmpty('agendamentosTable', 8);
+            return;
+        }
         tbody.innerHTML = agendamentos.map(a => {
             const cliente = clientes.find(c => c.id === a.clienteId);
             const funcionario = funcionarios.find(f => f.id === a.funcionarioId);
@@ -272,7 +322,8 @@ async function loadAgendamentos() {
                     <td>${format.status(a.status || 'AGENDADO')}</td>
                     <td>
                         <button class="btn btn-warning" onclick="editAgendamento(${a.id})">Editar</button>
-                        <button class="btn btn-danger" onclick="cancelarAgendamento(${a.id})">Cancelar</button>
+                        <button class="btn btn-danger" onclick="excluirAgendamento(${a.id})">Excluir</button>
+                        <button class="btn btn-primary" onclick="atualizarStatusAgendamento(${a.id})">Atualizar Status</button>
                     </td>
                 </tr>
             `;
@@ -322,12 +373,13 @@ function editAgendamento(id) {
     if (agendamento) openAgendamentoModal(agendamento);
 }
 
-async function cancelarAgendamento(id) {
-    if (confirm('Tem certeza que deseja cancelar este agendamento?')) {
+async function excluirAgendamento(id) {
+    if (confirm('Tem certeza que deseja excluir este agendamento?')) {
         try {
-            await api.patch(`/agendamentos/${id}/cancelar`);
-            ui.showAlert('Agendamento cancelado com sucesso!');
+            await api.delete(`/agendamentos/${id}`);
+            ui.showAlert('Agendamento excluído com sucesso!');
             loadAgendamentos();
+            loadDashboard();
         } catch (error) {
             ui.showAlert(error.message, 'error');
         }
@@ -336,9 +388,14 @@ async function cancelarAgendamento(id) {
 
 // Usuários
 async function loadUsuarios() {
+    showLoading('usuariosTable', 5);
     try {
         usuarios = await api.get('/usuarios') || [];
         const tbody = document.getElementById('usuariosTable');
+        if (usuarios.length === 0) {
+            showEmpty('usuariosTable', 5);
+            return;
+        }
         tbody.innerHTML = usuarios.map(u => `
             <tr>
                 <td>${u.id}</td>
@@ -385,6 +442,7 @@ async function deleteUsuario(id) {
 
 // Horários
 async function loadHorarios() {
+    showLoading('horariosTable', 6);
     try {
         if (funcionarios.length === 0) funcionarios = await api.get('/funcionarios') || [];
         
@@ -396,6 +454,10 @@ async function loadHorarios() {
         horarios = allHorarios;
         
         const tbody = document.getElementById('horariosTable');
+        if (horarios.length === 0) {
+            showEmpty('horariosTable', 6);
+            return;
+        }
         tbody.innerHTML = horarios.map(h => `
             <tr>
                 <td>${h.id}</td>
@@ -585,7 +647,7 @@ function renderMinhaAgenda(agendamentos) {
     const tbody = document.getElementById('minhaAgendaTable');
 
     if (!agendamentos || agendamentos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Nenhum agendamento encontrado</td></tr>';
+        showEmpty('minhaAgendaTable', 7, 'Nenhum agendamento encontrado');
         return;
     }
 
@@ -610,22 +672,89 @@ function renderMinhaAgenda(agendamentos) {
 }
 
 async function atualizarStatusAgendamento(id) {
-    const status = prompt('Novo status: AGENDADO, CONFIRMADO, EM_ATENDIMENTO, REALIZADO, CANCELADO, NAO_COMPARECEU');
-    if (!status) return;
+    document.getElementById('statusAgendamentoId').value = id;
+    document.getElementById('statusSelect').value = '';
+    ui.showModal('statusModal');
+}
 
-    const statusValidos = ['AGENDADO', 'CONFIRMADO', 'EM_ATENDIMENTO', 'REALIZADO', 'CANCELADO', 'NAO_COMPARECEU'];
-    if (!statusValidos.includes(status)) {
-        ui.showAlert('Status inválido', 'error');
+async function salvarStatusAgendamento() {
+    const id = document.getElementById('statusAgendamentoId').value;
+    const status = document.getElementById('statusSelect').value;
+    
+    if (!status) {
+        ui.showAlert('Selecione um status', 'error');
         return;
     }
 
     try {
         await api.patch(`/agendamentos/${id}/status?status=${status}`);
         ui.showAlert('Status atualizado com sucesso!');
-        carregarMinhaAgenda();
+        ui.hideModal('statusModal');
+        await loadAgendamentos();
+        await loadDashboard();
     } catch (error) {
         ui.showAlert(error.message, 'error');
     }
+}
+
+// Filters
+function filtrarClientes() {
+    const busca = document.getElementById('clienteSearch').value.toLowerCase();
+    const filtrados = clientes.filter(c => c.nome.toLowerCase().includes(busca));
+    const tbody = document.getElementById('clientesTable');
+    if (filtrados.length === 0) {
+        showEmpty('clientesTable', 5, 'Nenhum cliente encontrado');
+        return;
+    }
+    tbody.innerHTML = filtrados.map(c => `
+        <tr>
+            <td>${c.id}</td>
+            <td>${escapeHtml(c.nome)}</td>
+            <td>${escapeHtml(c.telefone)}</td>
+            <td>${escapeHtml(c.email) || '-'}</td>
+            <td>
+                <button class="btn btn-warning" onclick="editCliente(${c.id})">Editar</button>
+                <button class="btn btn-danger" onclick="deleteCliente(${c.id})">Excluir</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function filtrarAgendamentos() {
+    const busca = document.getElementById('agendamentoSearch').value.toLowerCase();
+    const statusFiltro = document.getElementById('agendamentoStatusFilter').value;
+    let filtrados = agendamentos.filter(a => {
+        const cliente = clientes.find(c => c.id === a.clienteId);
+        const matchBusca = !busca || (cliente && cliente.nome.toLowerCase().includes(busca));
+        const matchStatus = !statusFiltro || a.status === statusFiltro;
+        return matchBusca && matchStatus;
+    });
+    const tbody = document.getElementById('agendamentosTable');
+    if (filtrados.length === 0) {
+        showEmpty('agendamentosTable', 8, 'Nenhum agendamento encontrado');
+        return;
+    }
+    tbody.innerHTML = filtrados.map(a => {
+        const cliente = clientes.find(c => c.id === a.clienteId);
+        const funcionario = funcionarios.find(f => f.id === a.funcionarioId);
+        const procedimento = procedimentos.find(p => p.id === a.procedimentoId);
+        return `
+            <tr>
+                <td>${a.id}</td>
+                <td>${escapeHtml(cliente?.nome) || '-'}</td>
+                <td>${escapeHtml(funcionario?.nome) || '-'}</td>
+                <td>${escapeHtml(procedimento?.nome) || '-'}</td>
+                <td>${format.date(a.data)}</td>
+                <td>${a.horaInicio}</td>
+                <td>${format.status(a.status || 'AGENDADO')}</td>
+                <td>
+                    <button class="btn btn-warning" onclick="editAgendamento(${a.id})">Editar</button>
+                    <button class="btn btn-danger" onclick="excluirAgendamento(${a.id})">Excluir</button>
+                    <button class="btn btn-primary" onclick="atualizarStatusAgendamento(${a.id})">Atualizar Status</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
 // Form handlers
@@ -799,5 +928,11 @@ function setupFormHandlers() {
         } catch (error) {
             ui.showAlert(error.message, 'error');
         }
+    });
+
+    // Status
+    document.getElementById('statusForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        salvarStatusAgendamento();
     });
 }

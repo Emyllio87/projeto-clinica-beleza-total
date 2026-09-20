@@ -1,5 +1,6 @@
 package com.clinicabelezatotal.dto;
 
+import com.clinicabelezatotal.model.Agendamento;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -26,5 +27,9 @@ public class AgendamentoDTO {
     @NotNull(message = "Hora de início é obrigatória")
     private LocalTime horaInicio;
     
+    private LocalTime horaFim;
+    
     private String observacoes;
+    
+    private Agendamento.StatusAgendamento status;
 }

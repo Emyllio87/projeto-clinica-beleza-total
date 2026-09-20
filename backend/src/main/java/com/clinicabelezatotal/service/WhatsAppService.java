@@ -114,31 +114,32 @@ public class WhatsAppService {
             return;
         }
 
-        String chave = agendamento.getId() + ":status:" + agendamento.getStatus();
+        if (agendamento.getStatus() == Agendamento.StatusAgendamento.REALIZADO) {
+            enviarAgradecimento(agendamento);
+            return;
+        }
+
+        log.info("Notificação de status não enviada para {} - apenas REALIZADO gera notificação", agendamento.getStatus());
+    }
+
+    public void enviarAgradecimento(Agendamento agendamento) {
+        Cliente cliente = agendamento.getCliente();
+        if (!podeEnviar(cliente)) {
+            return;
+        }
+
+        String chave = agendamento.getId() + ":agradecimento";
         if (jaEnviado(chave)) {
-            log.info("Notificação de status já enviada para agendamento {}, ignorando duplicata", agendamento.getId());
+            log.info("Agradecimento já enviado para agendamento {}, ignorando duplicata", agendamento.getId());
             return;
         }
 
         DateTimeFormatter fmtData = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         DateTimeFormatter fmtHora = DateTimeFormatter.ofPattern("HH:mm");
 
-        String statusDescricao = switch (agendamento.getStatus()) {
-            case CONFIRMADO -> "confirmado";
-            case EM_ATENDIMENTO -> "em atendimento";
-            case REALIZADO -> "realizado";
-            case CANCELADO -> "cancelado";
-            case NAO_COMPARECEU -> "não compareceu";
-            default -> "agendado";
-        };
-
         String mensagem = String.format(
-            "Olá %s! Seu agendamento de %s dia %s às %s foi alterado para: %s. Clínica Beleza Total",
-            cliente.getNome(),
-            agendamento.getProcedimento().getNome(),
-            agendamento.getData().format(fmtData),
-            agendamento.getHoraInicio().format(fmtHora),
-            statusDescricao
+            "Olá, %s! Agradecemos por confiar na Clínica Beleza Total, esperamos nos ver em breve!",
+            cliente.getNome()
         );
 
         enviarMensagem(cliente.getTelefone(), mensagem);

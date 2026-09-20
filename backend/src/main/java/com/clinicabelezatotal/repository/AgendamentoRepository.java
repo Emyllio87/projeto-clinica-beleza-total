@@ -42,7 +42,7 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
     List<Agendamento> findByData(LocalDate data);
 
     @EntityGraph(attributePaths = {"cliente", "funcionario", "procedimento"})
-    @Query("SELECT a FROM Agendamento a WHERE a.data BETWEEN :inicio AND :fim AND a.status NOT IN ('CANCELADO')")
+    @Query("SELECT a FROM Agendamento a WHERE a.data BETWEEN :inicio AND :fim ORDER BY a.data ASC, a.horaInicio ASC")
     List<Agendamento> findByPeriodo(LocalDate inicio, LocalDate fim);
 
     @EntityGraph(attributePaths = {"cliente", "funcionario", "procedimento"})

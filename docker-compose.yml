@@ -1,24 +1,64 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: clinica_beleza_total
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: ${JWT_SECRET:-Y2xpbmljYV9iZXplemFfdG90YWxfc2VjcmV0X2tleV8yMDI2}
+      WHATSAPP_API_URL: http://evolution-api:8081
+      WHATSAPP_API_KEY: ${WHATSAPP_API_KEY:-B22D5427010E-4E41-875E-B841A9497218}
+      WHATSAPP_HABILITADO: "false"
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   redis:
     image: redis:7-alpine
-    network_mode: host
+    ports:
+      - "6379:6379"
 
   evolution-api:
     image: evoapicloud/evolution-api
     depends_on:
       - redis
-    network_mode: host
+      - postgres
+    ports:
+      - "8081:8081"
     environment:
-      - SERVER_PORT=8081
-      - SERVER_URL=http://localhost:8081
-      - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=postgresql://postgres:postgres@localhost:5432/evolution
-      - CACHE_REDIS_ENABLED=true
-      - CACHE_REDIS_URI=redis://localhost:6379
-      - AUTHENTICATION_API_KEY=B22D5427010E-4E41-875E-B841A9497218
-      - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
-      - DATABASE_SAVE_DATA_INSTANCE=true
-      - DATABASE_SAVE_DATA_NEW_MESSAGE=true
-      - DATABASE_SAVE_MESSAGE_UPDATE=true
-      - DATABASE_SAVE_DATA_CONTACTS=true
-      - DATABASE_SAVE_DATA_CHATS=true
+      SERVER_PORT: 8081
+      SERVER_URL: http://localhost:8081
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://postgres:postgres@postgres:5432/evolution
+      CACHE_REDIS_ENABLED: "true"
+      CACHE_REDIS_URI: redis://redis:6379
+      AUTHENTICATION_API_KEY: ${WHATSAPP_API_KEY:-B22D5427010E-4E41-875E-B841A9497218}
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "true"
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "true"
+      DATABASE_SAVE_MESSAGE_UPDATE: "true"
+      DATABASE_SAVE_DATA_CONTACTS: "true"
+      DATABASE_SAVE_DATA_CHATS: "true"
+
+volumes:
+  pgdata:

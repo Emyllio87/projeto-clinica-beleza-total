@@ -59,6 +59,9 @@
                     <button class="btn btn-primary" onclick="openClienteModal()">+ Novo Cliente</button>
                 </div>
                 <div class="card">
+                    <div style="margin-bottom: 1rem;">
+                        <input type="text" id="clienteSearch" placeholder="Buscar por nome..." oninput="filtrarClientes()" style="width: 100%; padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem;">
+                    </div>
                     <div class="table-container">
                         <table>
                             <thead>
@@ -132,6 +135,18 @@
                     <button class="btn btn-primary" onclick="openAgendamentoModal()">+ Novo Agendamento</button>
                 </div>
                 <div class="card">
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <input type="text" id="agendamentoSearch" placeholder="Buscar por cliente..." oninput="filtrarAgendamentos()" style="flex: 1; padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem;">
+                        <select id="agendamentoStatusFilter" onchange="filtrarAgendamentos()" style="padding: 0.6rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem;">
+                            <option value="">Todos os Status</option>
+                            <option value="AGENDADO">Agendado</option>
+                            <option value="CONFIRMADO">Confirmado</option>
+                            <option value="EM_ATENDIMENTO">Em Atendimento</option>
+                            <option value="REALIZADO">Realizado</option>
+                            <option value="CANCELADO">Cancelado</option>
+                            <option value="NAO_COMPARECEU">Não Compareceu</option>
+                        </select>
+                    </div>
                     <div class="table-container">
                         <table>
                             <thead>
@@ -568,6 +583,32 @@
                     <input type="time" id="horarioFim" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Atualizar Status -->
+    <div id="statusModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Atualizar Status do Agendamento</h3>
+                <span class="close" onclick="ui.hideModal('statusModal')">&times;</span>
+            </div>
+            <form id="statusForm">
+                <input type="hidden" id="statusAgendamentoId">
+                <div class="form-group">
+                    <label>Novo Status *</label>
+                    <select id="statusSelect" required>
+                        <option value="">Selecione...</option>
+                        <option value="AGENDADO">Agendado</option>
+                        <option value="CONFIRMADO">Confirmado</option>
+                        <option value="EM_ATENDIMENTO">Em Atendimento</option>
+                        <option value="REALIZADO">Realizado</option>
+                        <option value="CANCELADO">Cancelado</option>
+                        <option value="NAO_COMPARECEU">Não Compareceu</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Salvar Status</button>
             </form>
         </div>
     </div>
