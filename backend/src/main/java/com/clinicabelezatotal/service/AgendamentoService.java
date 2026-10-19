@@ -111,7 +111,12 @@ public class AgendamentoService {
             .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado"));
 
         if (usuario.getFuncionario() == null) {
-            throw new RuntimeException("Usuário não está associado a um funcionário");
+            if (usuario.getPerfil() == Usuario.PerfilUsuario.ADMIN) {
+                return agendamentoRepository.findAllNaoCancelados().stream()
+                    .map(this::toDTO)
+                    .toList();
+            }
+            return List.of();
         }
 
         return agendamentoRepository.findByFuncionarioId(usuario.getFuncionario().getId()).stream()
@@ -248,6 +253,9 @@ public class AgendamentoService {
         dto.setHoraFim(agendamento.getHoraFim());
         dto.setObservacoes(agendamento.getObservacoes());
         dto.setStatus(agendamento.getStatus());
+        dto.setClienteNome(agendamento.getCliente().getNome());
+        dto.setFuncionarioNome(agendamento.getFuncionario().getNome());
+        dto.setProcedimentoNome(agendamento.getProcedimento().getNome());
         return dto;
     }
 }

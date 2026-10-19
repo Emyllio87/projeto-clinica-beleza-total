@@ -33,6 +33,10 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
     @Query("SELECT a FROM Agendamento a WHERE a.funcionario.id = :funcionarioId AND a.status NOT IN ('CANCELADO') ORDER BY a.data DESC, a.horaInicio DESC")
     List<Agendamento> findByFuncionarioId(Long funcionarioId);
 
+    @EntityGraph(attributePaths = {"cliente", "funcionario", "procedimento"})
+    @Query("SELECT a FROM Agendamento a WHERE a.status NOT IN ('CANCELADO') ORDER BY a.data DESC, a.horaInicio DESC")
+    List<Agendamento> findAllNaoCancelados();
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT a FROM Agendamento a WHERE a.funcionario.id = :funcionarioId AND a.data = :data AND a.status NOT IN ('CANCELADO', 'NAO_COMPARECEU') AND ((a.horaInicio < :horaFim) AND (a.horaFim > :horaInicio))")
     List<Agendamento> findConflitosHorario(Long funcionarioId, LocalDate data, LocalTime horaInicio, LocalTime horaFim);

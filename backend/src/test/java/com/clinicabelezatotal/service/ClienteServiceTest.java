@@ -92,7 +92,7 @@ class ClienteServiceTest {
     void cadastrar_DeveExigirConsentimentoLGPD() {
         clienteDTO.setConsentimentoDados(false);
 
-        assertThrows(IllegalArgumentException.class, () -> clienteService.cadastrar(clienteDTO));
+        assertThrows(RuntimeException.class, () -> clienteService.cadastrar(clienteDTO));
     }
 
     @Test

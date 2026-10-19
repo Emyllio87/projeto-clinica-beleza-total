@@ -32,4 +32,10 @@ public class AgendamentoDTO {
     private String observacoes;
     
     private Agendamento.StatusAgendamento status;
+    
+    private String clienteNome;
+    
+    private String funcionarioNome;
+    
+    private String procedimentoNome;
 }

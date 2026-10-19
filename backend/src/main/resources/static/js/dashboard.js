@@ -67,6 +67,33 @@ function loadUserInfo() {
             document.getElementById('menuClientes').style.display = 'none';
             document.getElementById('menuFuncionarios').style.display = 'none';
         }
+        if (!auth.hasRole(['ADMIN', 'ESTETICISTA_ADMINISTRADORA'])) {
+            document.getElementById('menuIndicadores').style.display = 'none';
+        }
+        if (auth.hasRole(['FUNCIONARIO'])) {
+            document.getElementById('menuHorarios').style.display = 'none';
+            document.getElementById('menuHistorico').style.display = 'none';
+            document.getElementById('btnNovoAgendamento').style.display = 'none';
+            document.getElementById('btnNovoProcedimento').style.display = 'none';
+            document.getElementById('cardStatClientes').style.display = 'none';
+            document.getElementById('cardStatFuncionarios').style.display = 'none';
+        }
+    }
+}
+
+function podeVerCadastros() {
+    return auth.hasRole(['ADMIN', 'RECEPCIONISTA', 'ESTETICISTA_ADMINISTRADORA']);
+}
+
+async function carregarCadastrosAuxiliares() {
+    if (clientes.length === 0 && podeVerCadastros()) {
+        clientes = await api.get('/clientes') || [];
+    }
+    if (funcionarios.length === 0 && podeVerCadastros()) {
+        funcionarios = await api.get('/funcionarios') || [];
+    }
+    if (procedimentos.length === 0) {
+        procedimentos = await api.get('/procedimentos') || [];
     }
 }
 
@@ -95,12 +122,22 @@ function showSection(section) {
 // Dashboard
 async function loadDashboard() {
     try {
-        const [c, f, p, a] = await Promise.all([
-            api.get('/clientes'),
-            api.get('/funcionarios'),
-            api.get('/procedimentos'),
-            api.get('/agendamentos/periodo?inicio=' + getMesPassado() + '&fim=' + getProximoMes())
-        ]);
+        let c, f, p, a;
+        if (auth.hasRole(['FUNCIONARIO'])) {
+            [p, a] = await Promise.all([
+                api.get('/procedimentos'),
+                api.get('/agendamentos/me')
+            ]);
+            c = [];
+            f = [];
+        } else {
+            [c, f, p, a] = await Promise.all([
+                api.get('/clientes'),
+                api.get('/funcionarios'),
+                api.get('/procedimentos'),
+                api.get('/agendamentos/periodo?inicio=' + getMesPassado() + '&fim=' + getProximoMes())
+            ]);
+        }
         
         clientes = c || [];
         funcionarios = f || [];
@@ -240,6 +277,7 @@ async function loadProcedimentos() {
     showLoading('procedimentosTable', 6);
     try {
         procedimentos = await api.get('/procedimentos') || [];
+        const isFuncionario = auth.hasRole(['FUNCIONARIO']);
         const tbody = document.getElementById('procedimentosTable');
         if (procedimentos.length === 0) {
             showEmpty('procedimentosTable', 6);
@@ -253,8 +291,9 @@ async function loadProcedimentos() {
                 <td>${p.duracaoMinutos} min</td>
                 <td>${p.valor ? format.currency(p.valor) : '-'}</td>
                 <td>
+                    ${isFuncionario ? '-' : `
                     <button class="btn btn-warning" onclick="editProcedimento(${p.id})">Editar</button>
-                    <button class="btn btn-danger" onclick="deleteProcedimento(${p.id})">Excluir</button>
+                    <button class="btn btn-danger" onclick="deleteProcedimento(${p.id})">Excluir</button>`}
                 </td>
             </tr>
         `).join('');
@@ -295,11 +334,12 @@ async function deleteProcedimento(id) {
 async function loadAgendamentos() {
     showLoading('agendamentosTable', 8);
     try {
-        agendamentos = await api.get('/agendamentos/periodo?inicio=' + getMesPassado() + '&fim=' + getProximoMes()) || [];
+        const isFuncionario = auth.hasRole(['FUNCIONARIO']);
+        agendamentos = await api.get(isFuncionario
+            ? '/agendamentos/me'
+            : '/agendamentos/periodo?inicio=' + getMesPassado() + '&fim=' + getProximoMes()) || [];
         
-        if (clientes.length === 0) clientes = await api.get('/clientes') || [];
-        if (funcionarios.length === 0) funcionarios = await api.get('/funcionarios') || [];
-        if (procedimentos.length === 0) procedimentos = await api.get('/procedimentos') || [];
+        await carregarCadastrosAuxiliares();
         
         const tbody = document.getElementById('agendamentosTable');
         if (agendamentos.length === 0) {
@@ -311,20 +351,22 @@ async function loadAgendamentos() {
             const funcionario = funcionarios.find(f => f.id === a.funcionarioId);
             const procedimento = procedimentos.find(p => p.id === a.procedimentoId);
             
+            const acoes = isFuncionario
+                ? `<button class="btn btn-primary" onclick="atualizarStatusAgendamento(${a.id})">Atualizar Status</button>`
+                : `<button class="btn btn-warning" onclick="editAgendamento(${a.id})">Editar</button>
+                   <button class="btn btn-danger" onclick="excluirAgendamento(${a.id})">Excluir</button>
+                   <button class="btn btn-primary" onclick="atualizarStatusAgendamento(${a.id})">Atualizar Status</button>`;
+            
             return `
                 <tr>
                     <td>${a.id}</td>
-                    <td>${escapeHtml(cliente?.nome) || '-'}</td>
-                    <td>${escapeHtml(funcionario?.nome) || '-'}</td>
-                    <td>${escapeHtml(procedimento?.nome) || '-'}</td>
+                    <td>${escapeHtml(cliente?.nome || a.clienteNome) || '-'}</td>
+                    <td>${escapeHtml(funcionario?.nome || a.funcionarioNome) || '-'}</td>
+                    <td>${escapeHtml(procedimento?.nome || a.procedimentoNome) || '-'}</td>
                     <td>${format.date(a.data)}</td>
                     <td>${a.horaInicio}</td>
                     <td>${format.status(a.status || 'AGENDADO')}</td>
-                    <td>
-                        <button class="btn btn-warning" onclick="editAgendamento(${a.id})">Editar</button>
-                        <button class="btn btn-danger" onclick="excluirAgendamento(${a.id})">Excluir</button>
-                        <button class="btn btn-primary" onclick="atualizarStatusAgendamento(${a.id})">Atualizar Status</button>
-                    </td>
+                    <td>${acoes}</td>
                 </tr>
             `;
         }).join('');
@@ -413,13 +455,20 @@ async function loadUsuarios() {
     }
 }
 
-function openUsuarioModal(usuario = null) {
+async function openUsuarioModal(usuario = null) {
     document.getElementById('usuarioModalTitle').textContent = usuario ? 'Editar Usuário' : 'Novo Usuário';
     document.getElementById('usuarioId').value = usuario ? usuario.id : '';
     document.getElementById('usuarioNome').value = usuario ? usuario.nome : '';
     document.getElementById('usuarioEmail').value = usuario ? usuario.email : '';
     document.getElementById('usuarioSenha').value = '';
     document.getElementById('usuarioPerfil').value = usuario ? usuario.perfil : 'FUNCIONARIO';
+
+    if (funcionarios.length === 0) funcionarios = await api.get('/funcionarios') || [];
+    const selectFuncionario = document.getElementById('usuarioFuncionario');
+    selectFuncionario.innerHTML = '<option value="">— Nenhum —</option>' +
+        funcionarios.map(f => `<option value="${f.id}">${escapeHtml(f.nome)}</option>`).join('');
+    selectFuncionario.value = usuario?.funcionarioId ? String(usuario.funcionarioId) : '';
+
     ui.showModal('usuarioModal');
 }
 
@@ -622,9 +671,7 @@ async function carregarMinhaAgenda() {
     try {
         const agenda = await api.get('/agendamentos/me');
 
-        if (clientes.length === 0) clientes = await api.get('/clientes') || [];
-        if (funcionarios.length === 0) funcionarios = await api.get('/funcionarios') || [];
-        if (procedimentos.length === 0) procedimentos = await api.get('/procedimentos') || [];
+        await carregarCadastrosAuxiliares();
 
         renderMinhaAgenda(agenda || []);
     } catch (error) {
@@ -658,8 +705,8 @@ function renderMinhaAgenda(agendamentos) {
         return `
             <tr>
                 <td>${a.id}</td>
-                <td>${escapeHtml(cliente?.nome) || '-'}</td>
-                <td>${escapeHtml(procedimento?.nome) || '-'}</td>
+                <td>${escapeHtml(cliente?.nome || a.clienteNome) || '-'}</td>
+                <td>${escapeHtml(procedimento?.nome || a.procedimentoNome) || '-'}</td>
                 <td>${format.date(a.data)}</td>
                 <td>${a.horaInicio}</td>
                 <td>${format.status(a.status || 'AGENDADO')}</td>
@@ -690,7 +737,11 @@ async function salvarStatusAgendamento() {
         await api.patch(`/agendamentos/${id}/status?status=${status}`);
         ui.showAlert('Status atualizado com sucesso!');
         ui.hideModal('statusModal');
-        await loadAgendamentos();
+        if (document.getElementById('sectionMinhaAgenda').style.display !== 'none') {
+            await carregarMinhaAgenda();
+        } else {
+            await loadAgendamentos();
+        }
         await loadDashboard();
     } catch (error) {
         ui.showAlert(error.message, 'error');
@@ -877,12 +928,20 @@ function setupFormHandlers() {
         e.preventDefault();
         const id = document.getElementById('usuarioId').value;
         const senha = document.getElementById('usuarioSenha').value;
+        const perfil = document.getElementById('usuarioPerfil').value;
+        const funcionarioId = document.getElementById('usuarioFuncionario').value;
+        
+        if (perfil === 'FUNCIONARIO' && !funcionarioId) {
+            ui.showAlert('Selecione o funcionário vinculado para o perfil Funcionário', 'error');
+            return;
+        }
         
         const data = {
             nome: document.getElementById('usuarioNome').value,
             email: document.getElementById('usuarioEmail').value,
             senha: senha || undefined,
-            perfil: document.getElementById('usuarioPerfil').value
+            perfil: perfil,
+            funcionarioId: funcionarioId ? Number(funcionarioId) : null
         };
         
         try {

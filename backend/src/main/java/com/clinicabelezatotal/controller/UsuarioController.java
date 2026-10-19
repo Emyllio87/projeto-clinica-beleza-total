@@ -50,8 +50,8 @@ public class UsuarioController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> inativar(@PathVariable Long id) {
-        usuarioService.inativar(id);
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        usuarioService.excluir(id);
         return ResponseEntity.noContent().build();
     }
 }

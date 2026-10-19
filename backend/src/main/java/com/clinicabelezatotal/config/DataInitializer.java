@@ -33,12 +33,21 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        removerUsuariosInativos();
         criarProcedimentosSeNaoExistirem();
         criarFuncionariosSeNaoExistirem();
         criarUsuariosSeNaoExistirem();
         criarClientesSeNaoExistirem();
         criarHorariosSeNaoExistirem();
         criarAgendamentosSeNaoExistirem();
+    }
+
+    private void removerUsuariosInativos() {
+        List<Usuario> inativos = usuarioRepository.findByAtivoFalse();
+        if (!inativos.isEmpty()) {
+            usuarioRepository.deleteAll(inativos);
+            log.info("{} usuário(s) inativo(s) removido(s) do banco", inativos.size());
+        }
     }
 
     private void criarProcedimentosSeNaoExistirem() {
