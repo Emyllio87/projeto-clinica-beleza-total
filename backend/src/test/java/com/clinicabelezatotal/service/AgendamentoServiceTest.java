@@ -32,6 +32,10 @@ class AgendamentoServiceTest {
     private FuncionarioRepository funcionarioRepository;
     @Mock
     private ProcedimentoRepository procedimentoRepository;
+    @Mock
+    private UsuarioRepository usuarioRepository;
+    @Mock
+    private WhatsAppService whatsappService;
 
     @InjectMocks
     private AgendamentoService agendamentoService;
@@ -91,6 +95,7 @@ class AgendamentoServiceTest {
         assertNotNull(resultado);
         assertEquals(Agendamento.StatusAgendamento.CANCELADO, agendamento.getStatus());
         verify(agendamentoRepository, times(1)).save(agendamento);
+        verify(whatsappService, times(1)).enviarNotificacaoCancelamento(agendamento);
     }
 
     @Test
@@ -102,5 +107,6 @@ class AgendamentoServiceTest {
 
         assertNotNull(resultado);
         assertEquals(Agendamento.StatusAgendamento.CONFIRMADO, agendamento.getStatus());
+        verify(whatsappService, times(1)).enviarNotificacaoAlteracaoStatus(agendamento);
     }
 }

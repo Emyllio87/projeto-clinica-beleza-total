@@ -39,7 +39,7 @@ public class LembreteScheduler {
                 agendamentoRepository.save(agendamento);
                 log.info("Lembrete enviado para agendamento ID: {}", agendamento.getId());
             } catch (Exception e) {
-                log.error("Erro ao enviar lembrete para agendamento ID {}: {}",
+                log.error("Erro ao enviar lembrete para agendamento ID {}: {}. Lembrete NÃO marcado como enviado, será retentado.",
                     agendamento.getId(), e.getMessage());
             }
         }

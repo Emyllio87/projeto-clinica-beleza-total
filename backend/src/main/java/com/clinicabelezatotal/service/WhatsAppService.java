@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -198,18 +199,18 @@ public class WhatsAppService {
             return;
         }
 
-        String telefoneFormatado = telefone.replaceAll("[^0-9]", "");
-
-        if (!telefoneFormatado.startsWith("55")) {
-            telefoneFormatado = "55" + telefoneFormatado;
-        }
-
-        Map<String, Object> body = Map.of(
-            "number", telefoneFormatado,
-            "text", mensagem
-        );
-
         try {
+            String telefoneFormatado = telefone.replaceAll("[^0-9]", "");
+
+            if (!telefoneFormatado.startsWith("55")) {
+                telefoneFormatado = "55" + telefoneFormatado;
+            }
+
+            Map<String, Object> body = Map.of(
+                "number", telefoneFormatado,
+                "text", mensagem
+            );
+
             String resposta = webClient.post()
                 .uri(apiUrl + "/message/sendText/{instance}", instanceName)
                 .header("apikey", apiKey)
@@ -217,11 +218,12 @@ public class WhatsAppService {
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(String.class)
-                .block();
+                .block(Duration.ofSeconds(10));
 
             log.info("WhatsApp enviado com sucesso para {}: {}", telefone, resposta);
         } catch (Exception e) {
             log.error("Erro ao enviar WhatsApp para {}: {}", telefone, e.getMessage(), e);
+            throw new RuntimeException("Falha ao enviar WhatsApp para " + telefone, e);
         }
     }
 }

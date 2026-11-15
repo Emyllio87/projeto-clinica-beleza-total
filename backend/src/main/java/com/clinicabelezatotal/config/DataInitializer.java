@@ -51,8 +51,9 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void criarProcedimentosSeNaoExistirem() {
-        if (procedimentoRepository.count() == 0) {
-            List<Procedimento> procedimentos = List.of(
+        List<Procedimento> existentes = procedimentoRepository.findAll();
+
+        List<Procedimento> procedimentos = List.of(
                 Procedimento.builder()
                     .nome("Limpeza de Pele")
                     .descricao("Limpeza profunda da pele com extração de impurezas, hidratação e proteção")
@@ -84,11 +85,32 @@ public class DataInitializer implements CommandLineRunner {
                     .categoria(Procedimento.CategoriaProcedimento.CORPORAL)
                     .imagemUrl("https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=300&fit=crop")
                     .ativo(true)
+                    .build(),
+                Procedimento.builder()
+                    .nome("Massagem Relaxante")
+                    .descricao("Massagem corporal relaxante com óleos essenciais para alívio de tensões e estresse")
+                    .duracaoMinutos(60)
+                    .categoria(Procedimento.CategoriaProcedimento.CORPORAL)
+                    .imagemUrl("https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=300&fit=crop")
+                    .ativo(true)
                     .build()
             );
-            procedimentoRepository.saveAll(procedimentos);
-            log.info("5 procedimentos criados com sucesso");
+
+        List<Procedimento> novos = procedimentos.stream()
+            .filter(p -> existentes.stream().noneMatch(e -> e.getNome().equals(p.getNome())))
+            .toList();
+
+        if (!novos.isEmpty()) {
+            procedimentoRepository.saveAll(novos);
+            log.info("{} procedimento(s) criado(s) com sucesso", novos.size());
         }
+    }
+
+    private Procedimento buscarProcedimento(List<Procedimento> procedimentos, String nome) {
+        return procedimentos.stream()
+            .filter(p -> p.getNome().equals(nome))
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("Procedimento não encontrado: " + nome));
     }
 
     private void criarFuncionariosSeNaoExistirem() {
@@ -101,7 +123,7 @@ public class DataInitializer implements CommandLineRunner {
                     .telefone("(62) 99991-1111")
                     .cpf("111.111.111-11")
                     .especialidade("Esteticista Facial")
-                    .procedimentosHabilitados(List.of(todosProcedimentos.get(0), todosProcedimentos.get(3)))
+                    .procedimentosHabilitados(List.of(buscarProcedimento(todosProcedimentos, "Limpeza de Pele"), buscarProcedimento(todosProcedimentos, "Unhas em Gel")))
                     .ativo(true)
                     .build(),
                 Funcionario.builder()
@@ -109,7 +131,7 @@ public class DataInitializer implements CommandLineRunner {
                     .telefone("(62) 99992-2222")
                     .cpf("222.222.222-22")
                     .especialidade("Esteticista Corporal")
-                    .procedimentosHabilitados(List.of(todosProcedimentos.get(1), todosProcedimentos.get(4)))
+                    .procedimentosHabilitados(List.of(buscarProcedimento(todosProcedimentos, "Maquiagem Profissional"), buscarProcedimento(todosProcedimentos, "Massagem Relaxante")))
                     .ativo(true)
                     .build(),
                 Funcionario.builder()
@@ -117,7 +139,7 @@ public class DataInitializer implements CommandLineRunner {
                     .telefone("(62) 99993-3333")
                     .cpf("333.333.333-33")
                     .especialidade("Tricologista")
-                    .procedimentosHabilitados(List.of(todosProcedimentos.get(2)))
+                    .procedimentosHabilitados(List.of(buscarProcedimento(todosProcedimentos, "Penteados")))
                     .ativo(true)
                     .build(),
                 Funcionario.builder()
@@ -125,7 +147,7 @@ public class DataInitializer implements CommandLineRunner {
                     .telefone("(62) 99994-4444")
                     .cpf("444.444.444-44")
                     .especialidade("Esteticista Geral")
-                    .procedimentosHabilitados(List.of(todosProcedimentos.get(0), todosProcedimentos.get(1), todosProcedimentos.get(3)))
+                    .procedimentosHabilitados(List.of(buscarProcedimento(todosProcedimentos, "Limpeza de Pele"), buscarProcedimento(todosProcedimentos, "Maquiagem Profissional"), buscarProcedimento(todosProcedimentos, "Unhas em Gel")))
                     .ativo(true)
                     .build(),
                 Funcionario.builder()
@@ -133,7 +155,7 @@ public class DataInitializer implements CommandLineRunner {
                     .telefone("(62) 99995-5555")
                     .cpf("555.555.555-55")
                     .especialidade("Massoterapeuta")
-                    .procedimentosHabilitados(List.of(todosProcedimentos.get(1), todosProcedimentos.get(4)))
+                    .procedimentosHabilitados(List.of(buscarProcedimento(todosProcedimentos, "Maquiagem Profissional"), buscarProcedimento(todosProcedimentos, "Massagem Relaxante")))
                     .ativo(true)
                     .build()
             );
@@ -325,7 +347,7 @@ public class DataInitializer implements CommandLineRunner {
                 Agendamento.builder()
                     .cliente(clientes.get(0))
                     .funcionario(funcionarios.get(0))
-                    .procedimento(procedimentos.get(0))
+                    .procedimento(buscarProcedimento(procedimentos, "Limpeza de Pele"))
                     .data(segunda)
                     .horaInicio(LocalTime.of(9, 0))
                     .horaFim(LocalTime.of(10, 0))
@@ -335,7 +357,7 @@ public class DataInitializer implements CommandLineRunner {
                 Agendamento.builder()
                     .cliente(clientes.get(1))
                     .funcionario(funcionarios.get(1))
-                    .procedimento(procedimentos.get(1))
+                    .procedimento(buscarProcedimento(procedimentos, "Maquiagem Profissional"))
                     .data(segunda)
                     .horaInicio(LocalTime.of(10, 0))
                     .horaFim(LocalTime.of(11, 0))
@@ -345,7 +367,7 @@ public class DataInitializer implements CommandLineRunner {
                 Agendamento.builder()
                     .cliente(clientes.get(2))
                     .funcionario(funcionarios.get(2))
-                    .procedimento(procedimentos.get(2))
+                    .procedimento(buscarProcedimento(procedimentos, "Penteados"))
                     .data(segunda)
                     .horaInicio(LocalTime.of(14, 0))
                     .horaFim(LocalTime.of(15, 30))
@@ -355,7 +377,7 @@ public class DataInitializer implements CommandLineRunner {
                 Agendamento.builder()
                     .cliente(clientes.get(3))
                     .funcionario(funcionarios.get(0))
-                    .procedimento(procedimentos.get(3))
+                    .procedimento(buscarProcedimento(procedimentos, "Unhas em Gel"))
                     .data(terca)
                     .horaInicio(LocalTime.of(9, 0))
                     .horaFim(LocalTime.of(9, 45))
@@ -365,7 +387,7 @@ public class DataInitializer implements CommandLineRunner {
                 Agendamento.builder()
                     .cliente(clientes.get(4))
                     .funcionario(funcionarios.get(1))
-                    .procedimento(procedimentos.get(4))
+                    .procedimento(buscarProcedimento(procedimentos, "Massagem Relaxante"))
                     .data(terca)
                     .horaInicio(LocalTime.of(14, 0))
                     .horaFim(LocalTime.of(15, 0))
