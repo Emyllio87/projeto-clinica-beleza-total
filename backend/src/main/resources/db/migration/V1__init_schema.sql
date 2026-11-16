@@ -135,7 +135,6 @@ CREATE TABLE agendamentos (
     hora_inicio     TIME               NOT NULL,
     hora_fim        TIME               NOT NULL,
     status          status_agendamento NOT NULL,
-    observacoes     VARCHAR(255),
     lembrete_enviado BOOLEAN           NOT NULL DEFAULT FALSE,
     criado_em       TIMESTAMP          NOT NULL DEFAULT NOW(),
     atualizado_em   TIMESTAMP          NOT NULL DEFAULT NOW()

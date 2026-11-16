@@ -19,6 +19,5 @@ public class HistoricoAgendamentoDTO {
     private LocalTime horaInicio;
     private LocalTime horaFim;
     private String status;
-    private String observacoes;
     private LocalDateTime criadoEm;
 }

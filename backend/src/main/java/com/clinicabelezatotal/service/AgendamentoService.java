@@ -65,7 +65,6 @@ public class AgendamentoService {
             .horaInicio(dto.getHoraInicio())
             .horaFim(horaFim)
             .status(StatusAgendamento.AGENDADO)
-            .observacoes(dto.getObservacoes())
             .lembreteEnviado(false)
             .build();
         
@@ -140,6 +139,7 @@ public class AgendamentoService {
         return toDTO(agendamento);
     }
 
+
     @Transactional
     public AgendamentoDTO alterar(Long id, AgendamentoDTO dto) {
         Agendamento agendamento = agendamentoRepository.findById(id)
@@ -177,7 +177,6 @@ public class AgendamentoService {
         agendamento.setData(dto.getData());
         agendamento.setHoraInicio(dto.getHoraInicio());
         agendamento.setHoraFim(horaFim);
-        agendamento.setObservacoes(dto.getObservacoes());
         
         agendamento = agendamentoRepository.save(agendamento);
 
@@ -237,7 +236,6 @@ public class AgendamentoService {
         dto.setHoraInicio(agendamento.getHoraInicio());
         dto.setHoraFim(agendamento.getHoraFim());
         dto.setStatus(agendamento.getStatus().name());
-        dto.setObservacoes(agendamento.getObservacoes());
         dto.setCriadoEm(agendamento.getCriadoEm());
         return dto;
     }
@@ -251,11 +249,19 @@ public class AgendamentoService {
         dto.setData(agendamento.getData());
         dto.setHoraInicio(agendamento.getHoraInicio());
         dto.setHoraFim(agendamento.getHoraFim());
-        dto.setObservacoes(agendamento.getObservacoes());
         dto.setStatus(agendamento.getStatus());
         dto.setClienteNome(agendamento.getCliente().getNome());
         dto.setFuncionarioNome(agendamento.getFuncionario().getNome());
         dto.setProcedimentoNome(agendamento.getProcedimento().getNome());
         return dto;
+    }
+
+    /** Encaminha o diagnóstico de WhatsApp para o controller. */
+    public com.clinicabelezatotal.dto.FalhaNotificacaoDTO ultimaFalhaWhatsapp() {
+        return whatsappService.ultimaFalha();
+    }
+
+    public boolean whatsappHabilitado() {
+        return whatsappService.envioRealHabilitado();
     }
 }

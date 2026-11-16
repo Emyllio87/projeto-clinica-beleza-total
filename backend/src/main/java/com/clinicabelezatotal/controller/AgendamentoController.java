@@ -98,6 +98,16 @@ public class AgendamentoController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/diagnostico-whatsapp")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ESTETICISTA_ADMINISTRADORA')")
+    public ResponseEntity<java.util.Map<String, Object>> diagnosticoWhatsapp() {
+        var falha = agendamentoService.ultimaFalhaWhatsapp();
+        java.util.Map<String, Object> corpo = new java.util.LinkedHashMap<>();
+        corpo.put("envioRealHabilitado", agendamentoService.whatsappHabilitado());
+        corpo.put("ultimaFalha", falha);
+        return ResponseEntity.ok(corpo);
+    }
+
     @GetMapping("/lembretes")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<AgendamentoDTO>> buscarAgendamentosParaLembrete() {

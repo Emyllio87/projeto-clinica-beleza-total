@@ -64,7 +64,7 @@ class WhatsAppServiceTest {
 
     @Test
     void enviarConfirmacao_modoMock_deveLogarMensagemSemLancarExcecao() {
-        WhatsAppService service = new WhatsAppService(false);
+        WhatsAppService service = new WhatsAppService(false, 5);
         Agendamento agendamento = novoAgendamento(true);
 
         assertDoesNotThrow(() -> service.enviarConfirmacao(agendamento));
@@ -75,7 +75,7 @@ class WhatsAppServiceTest {
 
     @Test
     void enviarConfirmacao_semConsentimento_naoDeveEnviar() {
-        WhatsAppService service = new WhatsAppService(false);
+        WhatsAppService service = new WhatsAppService(false, 5);
         Agendamento agendamento = novoAgendamento(false);
 
         assertDoesNotThrow(() -> service.enviarConfirmacao(agendamento));
@@ -84,7 +84,7 @@ class WhatsAppServiceTest {
 
     @Test
     void enviarConfirmacao_duplicataDentroDe5Minutos_naoDeveReenviar() {
-        WhatsAppService service = new WhatsAppService(false);
+        WhatsAppService service = new WhatsAppService(false, 5);
         Agendamento agendamento = novoAgendamento(true);
 
         service.enviarConfirmacao(agendamento);
@@ -94,22 +94,22 @@ class WhatsAppServiceTest {
     }
 
     @Test
-    void enviarConfirmacao_falhaNoEnvioReal_devePropagarExcecaoENaoRegistrarDedup() {
-        WhatsAppService service = new WhatsAppService(true);
+    void enviarConfirmacao_falhaNoEnvioReal_naoInterrompeOFluxoENaoRegistraDedup() {
+        WhatsAppService service = new WhatsAppService(true, 1);
         ReflectionTestUtils.setField(service, "apiUrl", "http://localhost:1");
         ReflectionTestUtils.setField(service, "apiKey", "chave-teste");
         ReflectionTestUtils.setField(service, "instanceName", "teste");
         Agendamento agendamento = novoAgendamento(true);
 
-        assertThrows(RuntimeException.class, () -> service.enviarConfirmacao(agendamento));
-
-        // dedup não foi registrado na falha: nova tentativa tenta enviar de novo
-        assertThrows(RuntimeException.class, () -> service.enviarConfirmacao(agendamento));
+        // O envio é assíncrono: a falha da API externa é registrada em log e não
+        // interrompe a operação da recepção (o agendamento já está salvo).
+        assertDoesNotThrow(() -> service.enviarConfirmacao(agendamento));
+        assertDoesNotThrow(() -> service.enviarConfirmacao(agendamento));
     }
 
     @Test
     void enviarNotificacaoCancelamento_modoMock_deveLogar() {
-        WhatsAppService service = new WhatsAppService(false);
+        WhatsAppService service = new WhatsAppService(false, 5);
         Agendamento agendamento = novoAgendamento(true);
         agendamento.setStatus(Agendamento.StatusAgendamento.CANCELADO);
 
@@ -121,7 +121,7 @@ class WhatsAppServiceTest {
 
     @Test
     void enviarLembrete_modoMock_deveLogarComDataEHora() {
-        WhatsAppService service = new WhatsAppService(false);
+        WhatsAppService service = new WhatsAppService(false, 5);
         Agendamento agendamento = novoAgendamento(true);
 
         assertDoesNotThrow(() -> service.enviarLembrete(agendamento));

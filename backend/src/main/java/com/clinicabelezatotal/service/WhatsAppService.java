@@ -6,7 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
+import io.netty.channel.ChannelOption;
+import reactor.netty.http.client.HttpClient;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -32,10 +35,22 @@ public class WhatsAppService {
 
     private final ConcurrentHashMap<String, LocalDateTime> mensagensEnviadas = new ConcurrentHashMap<>();
 
+    /** Última falha de envio, exibida no diagnóstico do dashboard. */
+    private volatile com.clinicabelezatotal.dto.FalhaNotificacaoDTO ultimaFalha;
+
+    private final int timeoutSegundos;
+
     public WhatsAppService(
-            @Value("${whatsapp.habilitado:false}") boolean habilitado) {
+            @Value("${whatsapp.habilitado:false}") boolean habilitado,
+            @Value("${whatsapp.timeout-segundos:5}") int timeoutSegundos) {
         this.habilitado = habilitado;
-        this.webClient = WebClient.builder().build();
+        this.timeoutSegundos = timeoutSegundos;
+        HttpClient httpClient = HttpClient.create()
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeoutSegundos * 1000)
+            .responseTimeout(Duration.ofSeconds(timeoutSegundos));
+        this.webClient = WebClient.builder()
+            .clientConnector(new ReactorClientHttpConnector(httpClient))
+            .build();
     }
 
     public void enviarLembrete(Agendamento agendamento) {
@@ -211,19 +226,65 @@ public class WhatsAppService {
                 "text", mensagem
             );
 
-            String resposta = webClient.post()
+            webClient.post()
                 .uri(apiUrl + "/message/sendText/{instance}", instanceName)
                 .header("apikey", apiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(String.class)
-                .block(Duration.ofSeconds(10));
-
-            log.info("WhatsApp enviado com sucesso para {}: {}", telefone, resposta);
+                .timeout(Duration.ofSeconds(timeoutSegundos))
+                .subscribe(
+                    resposta -> log.info("WhatsApp enviado para {}: {}", telefone, resumo(resposta)),
+                    erro -> registrarFalha(telefone, erro.getMessage())
+                );
         } catch (Exception e) {
-            log.error("Erro ao enviar WhatsApp para {}: {}", telefone, e.getMessage(), e);
+            log.error("Erro ao preparar envio de WhatsApp para {}: {}", telefone, e.getMessage());
             throw new RuntimeException("Falha ao enviar WhatsApp para " + telefone, e);
         }
+    }
+
+    /** Resume a resposta da Evolution para o log (evita despejar JSON inteiro). */
+    private String resumo(String resposta) {
+        if (resposta == null) return "(sem corpo)";
+        return resposta.length() > 120 ? resposta.substring(0, 120) + "..." : resposta;
+    }
+
+    private void registrarFalha(String destinatario, String motivo) {
+        String texto = traduzirErro(motivo);
+        this.ultimaFalha = new com.clinicabelezatotal.dto.FalhaNotificacaoDTO(
+                java.time.LocalDateTime.now(), destinatario, texto);
+        log.error("Falha ao enviar WhatsApp para {}: {}", destinatario, texto);
+    }
+
+    /** Traduz respostas comuns da Evolution para uma mensagem compreensível. */
+    private String traduzirErro(String motivo) {
+        if (motivo == null) return "erro desconhecido";
+        if (motivo.contains("400") && motivo.contains("sendText")) {
+            return "número sem WhatsApp ou inválido (a Evolution recusou o envio)";
+        }
+        if (motivo.contains("401") || motivo.contains("403")) {
+            return "chave da API ou sessão do WhatsApp inválida";
+        }
+        if (motivo.contains("404")) {
+            return "instância não encontrada na Evolution API";
+        }
+        if (motivo.toLowerCase().contains("timeout")) {
+            return "Evolution API não respondeu a tempo";
+        }
+        if (motivo.toLowerCase().contains("connection refused")) {
+            return "Evolution API fora do ar (containers parados?)";
+        }
+        return motivo.length() > 160 ? motivo.substring(0, 160) + "..." : motivo;
+    }
+
+    /** Última falha registrada, ou null se nenhuma desde a inicialização. */
+    public com.clinicabelezatotal.dto.FalhaNotificacaoDTO ultimaFalha() {
+        return ultimaFalha;
+    }
+
+    /** Indica se o envio real está habilitado (false = modo mock). */
+    public boolean envioRealHabilitado() {
+        return habilitado;
     }
 }

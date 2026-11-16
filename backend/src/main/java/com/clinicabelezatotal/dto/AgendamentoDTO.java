@@ -29,8 +29,6 @@ public class AgendamentoDTO {
     
     private LocalTime horaFim;
     
-    private String observacoes;
-    
     private Agendamento.StatusAgendamento status;
     
     private String clienteNome;

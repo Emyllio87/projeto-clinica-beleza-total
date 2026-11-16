@@ -63,7 +63,8 @@ public class Cliente {
     // LGPD - Método para anonimizar dados (exclusão lógica)
     public void anonimizarDados() {
         this.nome = "CLIENTE_ANONIMO_" + this.id;
-        this.telefone = null;
+        // telefone é NOT NULL no banco: substitui por marcador em vez de null
+        this.telefone = "ANONIMIZADO";
         this.cpf = null;
         this.email = null;
         this.observacoes = null;

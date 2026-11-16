@@ -380,7 +380,6 @@ async function openAgendamentoModal(agendamento = null) {
     document.getElementById('agendamentoId').value = agendamento ? agendamento.id : '';
     document.getElementById('agendamentoData').value = agendamento ? agendamento.data : '';
     document.getElementById('agendamentoHora').value = agendamento ? agendamento.horaInicio : '';
-    document.getElementById('agendamentoObservacoes').value = agendamento ? agendamento.observacoes || '' : '';
     
     if (clientes.length === 0) clientes = await api.get('/clientes') || [];
     if (procedimentos.length === 0) procedimentos = await api.get('/procedimentos') || [];
@@ -904,8 +903,7 @@ function setupFormHandlers() {
             procedimentoId: parseInt(document.getElementById('agendamentoProcedimento').value),
             funcionarioId: parseInt(document.getElementById('agendamentoFuncionario').value),
             data: document.getElementById('agendamentoData').value,
-            horaInicio: document.getElementById('agendamentoHora').value,
-            observacoes: document.getElementById('agendamentoObservacoes').value || null
+            horaInicio: document.getElementById('agendamentoHora').value
         };
         
         try {

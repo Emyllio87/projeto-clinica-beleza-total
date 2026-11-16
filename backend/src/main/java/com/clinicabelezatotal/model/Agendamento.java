@@ -53,7 +53,6 @@ public class Agendamento {
     @Column(nullable = false)
     private StatusAgendamento status;
 
-    private String observacoes;
 
     @Column(nullable = false)
     private Boolean lembreteEnviado = false;
